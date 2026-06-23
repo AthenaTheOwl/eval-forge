@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://eval-forge.dev/schemas/run_report.schema.json",
+  "title": "run report",
+  "description": "The typed output of a runner pass: per-case scores and verdicts plus a summary. The gate consumes this.",
+  "type": "object",
+  "required": ["run_id", "pack_id", "results", "summary"],
+  "additionalProperties": false,
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable id for this run."
+    },
+    "pack_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The pack that was run."
+    },
+    "target": {
+      "type": "string",
+      "description": "The fixture target the pack ran against."
+    },
+    "created_at": {
+      "type": "string",
+      "description": "ISO-8601 timestamp. Pinned in committed fixtures for determinism."
+    },
+    "results": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/result" }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["total", "passed", "failed", "score"],
+      "additionalProperties": false,
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Mean per-case score across the pack."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "result": {
+      "type": "object",
+      "required": ["case_id", "type", "score", "threshold", "verdict"],
+      "additionalProperties": false,
+      "properties": {
+        "case_id": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "minLength": 1 },
+        "score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+        "verdict": { "type": "string", "enum": ["pass", "fail"] },
+        "detail": {
+          "type": "string",
+          "description": "Flat one-line explanation. Customer-facing; passes voice_lint."
+        }
+      }
+    }
+  }
+}

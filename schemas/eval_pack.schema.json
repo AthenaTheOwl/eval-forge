@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://eval-forge.dev/schemas/eval_pack.schema.json",
+  "title": "eval pack",
+  "description": "An eval pack: a typed bundle of cases run against a target. The pack shape is the load-bearing contract; the runner and gate both consume it.",
+  "type": "object",
+  "required": ["pack_id", "target_shape", "cases"],
+  "additionalProperties": false,
+  "properties": {
+    "pack_id": {
+      "type": "string",
+      "description": "Stable id for this pack.",
+      "minLength": 1
+    },
+    "target_repo": {
+      "type": "string",
+      "description": "The repo this pack evaluates. Optional in v0.1."
+    },
+    "target_shape": {
+      "type": "string",
+      "description": "The shape of the target. Drives which template a pack was generated from.",
+      "enum": ["rag", "agent", "hybrid"]
+    },
+    "baseline_run_ref": {
+      "type": "string",
+      "description": "Optional pointer to a baseline run report this pack gates against."
+    },
+    "cases": {
+      "type": "array",
+      "description": "The cases. Each is one deterministic check against a fixture trace.",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/case" }
+    }
+  },
+  "$defs": {
+    "case": {
+      "type": "object",
+      "required": ["id", "type", "input", "expect", "threshold"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable case id, used in the report."
+        },
+        "type": {
+          "type": "string",
+          "description": "The check type. Each maps to a deterministic grader.",
+          "enum": [
+            "recall_at_k",
+            "citation_faithfulness",
+            "abstention",
+            "refusal",
+            "tool_call_correctness"
+          ]
+        },
+        "input": {
+          "type": "string",
+          "description": "The fixture key this case feeds to the target. The fixture target resolves it deterministically.",
+          "minLength": 1
+        },
+        "expect": {
+          "type": "object",
+          "description": "Expected behavior, interpreted by the grader for this case type.",
+          "additionalProperties": true
+        },
+        "threshold": {
+          "type": "number",
+          "description": "Minimum score (0..1) for this case to pass.",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  }
+}

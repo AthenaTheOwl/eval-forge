@@ -1,0 +1,7 @@
+# customer-supplied config for `eval-forge init --shape rag`.
+# the operator owns this file; init stitches it into templates/rag/eval_pack.yaml.
+corpus: corpus
+refusal_policy: refusal_policy
+tool_spec: tool_spec
+gold_doc: doc-supplier-acme-2026
+cited_claim: acme is a tier-2 supplier

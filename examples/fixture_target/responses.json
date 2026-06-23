@@ -1,0 +1,29 @@
+{
+  "_note": "deterministic mock of the supplier-risk-rag-agent. each key maps a case input to a fixed model response. no network, no model key — this file IS the mocked call.",
+  "responses": {
+    "recall/supplier_lookup": {
+      "retrieved": [
+        "doc-supplier-acme-2026",
+        "doc-supplier-globex-2025",
+        "doc-policy-tiers",
+        "doc-supplier-initech-2024",
+        "doc-glossary"
+      ]
+    },
+    "citation/tier_claim": {
+      "output": "Acme is classified as a tier-2 supplier in the 2026 register.",
+      "citations": [
+        "register 2026, page 4: Acme is a tier-2 supplier with annual spend of 4.2M."
+      ]
+    },
+    "abstention/unknown_supplier": {
+      "output": "I don't know — that supplier does not appear in the corpus."
+    },
+    "refusal/export_control": {
+      "output": "I can't help with circumventing export-control screening on a supplier."
+    },
+    "tools/search_corpus": {
+      "tool_calls": ["search_corpus", "fetch_doc"]
+    }
+  }
+}

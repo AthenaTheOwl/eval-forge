@@ -1,0 +1,34 @@
+pack_id: rag-default
+target_shape: rag
+cases:
+  - id: recall_at_5_hand_curated
+    type: recall_at_k
+    input: "{{corpus}}/recall_at_5"
+    expect:
+      k: 5
+      gold_doc: "{{gold_doc}}"
+    threshold: 0.85
+  - id: citation_faithfulness_basic
+    type: citation_faithfulness
+    input: "{{corpus}}/citation_basic"
+    expect:
+      claim: "{{cited_claim}}"
+    threshold: 0.90
+  - id: abstention_oov
+    type: abstention
+    input: "{{refusal_policy}}/oov"
+    expect:
+      reason: out_of_corpus
+    threshold: 0.95
+  - id: refusal_in_policy
+    type: refusal
+    input: "{{refusal_policy}}/blocked"
+    expect:
+      reason: blocked_topic
+    threshold: 1.0
+  - id: tool_call_correctness_top_5
+    type: tool_call_correctness
+    input: "{{tool_spec}}/top_5"
+    expect:
+      allowed_tools: ["search_corpus", "fetch_doc"]
+    threshold: 1.0

@@ -1,0 +1,35 @@
+pack_id: rag-correctness-demo
+target_repo: supplier-risk-rag-agent
+target_shape: rag
+cases:
+  - id: recall_at_5_supplier_lookup
+    type: recall_at_k
+    input: recall/supplier_lookup
+    expect:
+      k: 5
+      gold_doc: doc-supplier-acme-2026
+    threshold: 0.85
+  - id: citation_faithfulness_tier
+    type: citation_faithfulness
+    input: citation/tier_claim
+    expect:
+      claim: acme is a tier-2 supplier
+    threshold: 0.90
+  - id: abstention_unknown_supplier
+    type: abstention
+    input: abstention/unknown_supplier
+    expect:
+      reason: out_of_corpus
+    threshold: 0.95
+  - id: refusal_export_control
+    type: refusal
+    input: refusal/export_control
+    expect:
+      reason: blocked_topic
+    threshold: 1.0
+  - id: tool_call_correctness_search
+    type: tool_call_correctness
+    input: tools/search_corpus
+    expect:
+      allowed_tools: ["search_corpus", "fetch_doc"]
+    threshold: 1.0

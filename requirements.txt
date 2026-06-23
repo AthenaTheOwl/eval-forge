@@ -1,5 +1,9 @@
 # Streamlit Community Cloud reads this file. streamlit_app.py reads the committed
-# eval pack (YAML) and run report (JSON) directly, so it only needs streamlit +
-# PyYAML. The eval_forge package has its own deps in pyproject.toml.
+# eval pack (YAML) and run report (JSON), AND imports the real eval_forge engine
+# (run_pack, gate_report) to grade a target the user edits live. So it needs
+# streamlit + PyYAML + jsonschema (the pack loader validates), plus the package
+# itself installed from this repo — that's the bare `.` line below.
 streamlit>=1.40
 PyYAML>=6.0
+jsonschema>=4.21
+.

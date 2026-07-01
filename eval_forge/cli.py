@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 from . import __version__
-from .gate import comment_markdown, gate_report, load_report
+from .gate import GateError, comment_markdown, gate_report, load_report
 from .init import init_pack, load_config, write_pack
 from .pack import PackError, load_pack
 from .run import TargetError, run
@@ -21,8 +21,25 @@ from .show import render, show
 
 
 def _cmd_init(args: argparse.Namespace) -> int:
-    config = load_config(args.config)
-    pack = init_pack(args.shape, config)
+    try:
+        config = load_config(args.config)
+        pack = init_pack(args.shape, config)
+    except FileNotFoundError as err:
+        # load_config raises with the missing config path in filename; init_pack's
+        # unknown-shape message is already actionable, so pass it through as-is.
+        if err.filename:
+            print(f"error: config not found: {err.filename}", file=sys.stderr)
+        else:
+            print(f"error: {err}", file=sys.stderr)
+        return 2
+    except KeyError as err:
+        # _fill raises KeyError when the config lacks a placeholder the template needs
+        print(f"error: {err.args[0]}", file=sys.stderr)
+        return 2
+    except (PackError, ValueError) as err:
+        # config is not a mapping, or the filled template fails validation
+        print(f"error: {err}", file=sys.stderr)
+        return 2
     out_path = write_pack(pack, args.out)
     print(f"wrote {out_path}")
     return 0
@@ -45,9 +62,13 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
 
 def _cmd_gate(args: argparse.Namespace) -> int:
-    report = load_report(args.report)
-    baseline = load_report(args.baseline) if args.baseline else None
-    verdict = gate_report(report, baseline=baseline, tolerance=args.tolerance)
+    try:
+        report = load_report(args.report)
+        baseline = load_report(args.baseline) if args.baseline else None
+        verdict = gate_report(report, baseline=baseline, tolerance=args.tolerance)
+    except GateError as err:
+        print(f"error: {err}", file=sys.stderr)
+        return 2
     md = comment_markdown(report, verdict)
     if args.comment:
         out = Path(args.comment)

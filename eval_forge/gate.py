@@ -15,6 +15,10 @@ from pathlib import Path
 from typing import Any
 
 
+class GateError(ValueError):
+    """The run report could not be loaded, parsed, or gated."""
+
+
 def _index_by_case(report: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return {r["case_id"]: r for r in report.get("results", [])}
 
@@ -29,9 +33,13 @@ def gate_report(
     failures: list[dict[str, Any]] = []
     regressions: list[dict[str, Any]] = []
 
+    results = report.get("results")
+    if not isinstance(results, list):
+        raise GateError("report has no results; is this an eval-forge run report?")
+
     base_index = _index_by_case(baseline) if baseline else {}
 
-    for r in report["results"]:
+    for r in results:
         if r["verdict"] == "fail":
             failures.append(r)
         if baseline:
@@ -49,11 +57,14 @@ def gate_report(
                     )
 
     passed = not failures and not regressions
+    summary = report.get("summary")
+    if not isinstance(summary, dict) or "score" not in summary:
+        raise GateError("report has no summary.score; is this an eval-forge run report?")
     return {
         "passed": passed,
         "failures": failures,
         "regressions": regressions,
-        "score": report["summary"]["score"],
+        "score": summary["score"],
     }
 
 
@@ -103,4 +114,15 @@ def comment_markdown(report: dict[str, Any], verdict: dict[str, Any]) -> str:
 
 
 def load_report(path: str | Path) -> dict[str, Any]:
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+    path = Path(path)
+    try:
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        raise GateError(f"report not found: {path}")
+    try:
+        doc = json.loads(text)
+    except json.JSONDecodeError as err:
+        raise GateError(f"report is not valid JSON: {path} ({err})")
+    if not isinstance(doc, dict):
+        raise GateError(f"report {path} is not a JSON object")
+    return doc

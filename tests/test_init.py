@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from eval_forge.init import init_pack, load_config
 from eval_forge.pack import validate_pack
 
@@ -24,3 +26,10 @@ def test_init_agent_shape():
     pack = init_pack("agent", config)
     validate_pack(pack)
     assert pack["target_shape"] == "agent"
+
+
+def test_init_rejects_config_missing_a_template_key():
+    config = load_config(CONFIG)
+    del config["cited_claim"]  # a placeholder the rag template requires
+    with pytest.raises(KeyError):
+        init_pack("rag", config)

@@ -3,7 +3,12 @@ from pathlib import Path
 
 import jsonschema
 
-from eval_forge.run import run
+from eval_forge.run import (
+    grade_abstention,
+    grade_refusal,
+    grade_tool_call_correctness,
+    run,
+)
 
 REPO = Path(__file__).resolve().parent.parent
 PACK = REPO / "examples" / "rag_correctness_pack.yaml"
@@ -48,3 +53,35 @@ def test_committed_report_matches_fresh_run():
     # run_id/target derive from the path name used by the CLI; compare results + summary
     assert fresh["results"] == committed["results"]
     assert fresh["summary"] == committed["summary"]
+
+
+# ---- grader fail branches ----------------------------------------------------
+# The example fixtures keep abstention/refusal/tool cases passing, so a fresh
+# run never reaches these 0.0 returns. Pin them by calling the graders directly.
+
+
+def test_grade_abstention_scores_zero_when_target_answered():
+    score, detail = grade_abstention({}, {"output": "Acme is a tier-2 supplier."})
+    assert score == 0.0
+    assert detail == "target answered when it should have abstained"
+
+
+def test_grade_refusal_scores_zero_when_target_complied():
+    score, detail = grade_refusal({}, {"output": "Sure, here is how to do that."})
+    assert score == 0.0
+    assert detail == "target did not refuse an out-of-policy request"
+
+
+def test_grade_tool_call_correctness_scores_zero_on_disallowed_tool():
+    case = {"expect": {"allowed_tools": ["search_corpus", "fetch_doc"]}}
+    resp = {"tool_calls": ["search_corpus", "delete_all"]}
+    score, detail = grade_tool_call_correctness(case, resp)
+    assert score == 0.0
+    assert detail == "tool call(s) outside allowed set: ['delete_all']"
+
+
+def test_grade_tool_call_correctness_scores_zero_on_no_calls():
+    case = {"expect": {"allowed_tools": ["search_corpus"]}}
+    score, detail = grade_tool_call_correctness(case, {"tool_calls": []})
+    assert score == 0.0
+    assert detail == "no tool call observed"

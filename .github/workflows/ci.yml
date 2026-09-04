@@ -41,3 +41,5 @@ jobs:
                   if not compileall.compile_dir(str(path), quiet=1):
                       raise SystemExit(f"compile failed: {dir_name}")
           PY
+      - name: validate_data_conformance
+        run: python scripts/validate_data_conformance.py

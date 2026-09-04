@@ -42,4 +42,4 @@ jobs:
                       raise SystemExit(f"compile failed: {dir_name}")
           PY
       - name: validate_data_conformance
-        run: python scripts/validate_data_conformance.py
+        run: python -m uv run python scripts/validate_data_conformance.py

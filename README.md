@@ -85,6 +85,46 @@ python -m eval_forge gate reports/regressed.json --baseline reports/run.json
 # exits 1; recall and citation dropped below threshold and below baseline
 ```
 
+## Harvest environments from fix commits
+
+`harvest` turns a repository's own fix commits into graded environments: start at
+the commit before the fix, grade with the tests that fail there and pass after it,
+and drop any pair where that does not hold.
+
+A candidate is a non-merge commit that touches a source file and a test module
+(`test_*.py` or `*_test.py`). In a temporary git worktree, harvest checks out the
+parent, overlays the commit's test files and runs them; they must fail. It then
+checks out the commit and runs them again; they must pass. Each side runs twice,
+and a pair whose runs disagree is dropped as `flaky`. The other drop reasons are
+`passes_before` (the tests do not exercise the fix) and `fails_after` (the
+environment is broken).
+
+```bash
+python scripts/make_harvest_fixture.py /tmp/harvest-fixture
+python -m eval_forge harvest --repo /tmp/harvest-fixture --out /tmp/envs.yaml
+```
+
+```
+dropped 96b05abc9730  passes_before
+dropped f4bf5eb45d78  fails_after
+wrote /tmp/envs.yaml
+kept 1, dropped 2 (passes_before 1, fails_after 1)
+```
+
+Each kept pair is `{id, base_sha, fix_sha, fail_to_pass, test_cmd}`, typed by
+`schemas/env_case.schema.json`; `examples/harvested_envs.yaml` is the fixture's
+output. `--test-cmd` defaults to `python -m pytest -q {tests}`, where `{tests}`
+becomes the touched test files and a leading `python` is the interpreter running
+eval-forge. `--max-commits` (default 50) bounds the scan. harvest produces the
+environments only; running an agent in them is a separate step.
+
+Harvesting runs the target repository's tests on your machine. Point it only at
+repositories you trust.
+
+The fail-to-pass selection follows SWE-bench
+([Jimenez et al., 2023](https://arxiv.org/abs/2310.06770)). The design record is
+`decisions/DEC-EF-003-harvest-fix-commits.md`.
+
 ## Live demo
 
 A Streamlit app reads the committed eval pack and run report and shows the cases
@@ -120,12 +160,13 @@ branch `main`, main file `streamlit_app.py`. It reads `reports/run.json` and
 
 ```
 eval-forge/
-  schemas/        eval_pack.schema.json, run_report.schema.json
-  eval_forge/     pack.py, run.py, gate.py, init.py, show.py, cli.py
+  schemas/        eval_pack, run_report, env_case schemas
+  eval_forge/     pack.py, run.py, gate.py, init.py, show.py, harvest.py, cli.py
   templates/      per-shape templates (rag, agent)
-  examples/       committed pack + fixture target + customer config
+  examples/       committed pack + fixture target + customer config + harvested envs
   reports/        committed run report + PR-comment markdown
-  tests/          pack validation, run, gate, init
+  scripts/        data-conformance gate, harvest fixture builder
+  tests/          pack validation, run, gate, init, harvest
   streamlit_app.py
 ```
 

@@ -23,6 +23,7 @@ this very repo.
 | `gate` | Compares report against baseline; pass / fail decision |
 | `template-curator` | Hand-curates per-shape template packs under templates/ |
 | `app-bridge` | GitHub App glue that turns a webhook into a runner invocation |
+| `harvester` | Turns a repo's fix commits into fail-to-pass environment cases |
 
 These roles exist in spec ledger; not all are implemented in v0.
 

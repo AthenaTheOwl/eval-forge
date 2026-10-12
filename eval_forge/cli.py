@@ -1,9 +1,10 @@
-"""eval-forge CLI: init / run / gate / show.
+"""eval-forge CLI: init / run / gate / show / harvest.
 
-    eval-forge init  --shape rag --config customer.yaml --out evals/
-    eval-forge run   evals/pack.yaml --target examples/fixture_target --out reports/run.json
-    eval-forge gate  reports/run.json [--baseline base.json] [--comment out.md]
-    eval-forge show  [reports/run.json]
+    eval-forge init    --shape rag --config customer.yaml --out evals/
+    eval-forge run     evals/pack.yaml --target examples/fixture_target --out reports/run.json
+    eval-forge gate    reports/run.json [--baseline base.json] [--comment out.md]
+    eval-forge show    [reports/run.json]
+    eval-forge harvest --repo PATH [--test-cmd 'python -m pytest -q {tests}'] --out envs.yaml
 """
 from __future__ import annotations
 
@@ -14,6 +15,7 @@ from pathlib import Path
 
 from . import __version__
 from .gate import GateError, comment_markdown, gate_report, load_report
+from .harvest import DEFAULT_TEST_CMD, HarvestError, harvest, write_envs
 from .init import init_pack, load_config, write_pack
 from .pack import PackError, load_pack
 from .run import TargetError, run
@@ -84,6 +86,26 @@ def _cmd_show(args: argparse.Namespace) -> int:
     return show(args.report)
 
 
+def _cmd_harvest(args: argparse.Namespace) -> int:
+    try:
+        result = harvest(
+            args.repo,
+            test_cmd=args.test_cmd,
+            max_commits=args.max_commits,
+            runs=args.runs,
+            timeout=args.timeout,
+        )
+    except HarvestError as err:
+        print(f"error: {err}", file=sys.stderr)
+        return 2
+    for sha, reason in result.dropped:
+        print(f"dropped {sha[:12]}  {reason}")
+    out = write_envs(result.kept, args.out)
+    print(f"wrote {out}")
+    print(result.summary())
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="eval-forge", description=__doc__)
     parser.add_argument("--version", action="version", version=f"eval-forge {__version__}")
@@ -116,6 +138,31 @@ def build_parser() -> argparse.ArgumentParser:
     p_show = sub.add_parser("show", help="print the latest run report readably")
     p_show.add_argument("report", nargs="?", help="report path (default: latest under reports/)")
     p_show.set_defaults(func=_cmd_show)
+
+    p_harvest = sub.add_parser(
+        "harvest",
+        help="turn a repo's fix commits into fail-to-pass environment cases",
+        description="Runs the target repo's tests. Point it only at repos you trust.",
+    )
+    p_harvest.add_argument("--repo", required=True, help="git repository to harvest")
+    p_harvest.add_argument(
+        "--test-cmd",
+        default=DEFAULT_TEST_CMD,
+        help="test command; {tests} becomes the touched test files (default: %(default)s)",
+    )
+    p_harvest.add_argument(
+        "--max-commits", type=int, default=50, help="scan this many recent commits"
+    )
+    p_harvest.add_argument(
+        "--runs", type=int, default=2, help="runs per side; disagreeing runs drop the pair as flaky"
+    )
+    p_harvest.add_argument(
+        "--timeout", type=float, default=300.0, help="seconds per test run; a timeout is a failure"
+    )
+    p_harvest.add_argument(
+        "--out", default="evals/harvested_envs.yaml", help="environment cases YAML"
+    )
+    p_harvest.set_defaults(func=_cmd_harvest)
 
     return parser
 

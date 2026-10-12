@@ -1,0 +1,6 @@
+- id: fix-2e53f134a0f1
+  base_sha: aa36e59463661efbef609d1c73f7de1f329541d9
+  fix_sha: 2e53f134a0f1da73da3780ed95c8f97b6718a29c
+  fail_to_pass:
+  - tests/test_clamp.py
+  test_cmd: python -m pytest -q tests/test_clamp.py

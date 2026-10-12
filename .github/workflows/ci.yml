@@ -8,7 +8,16 @@ on:
 
 jobs:
   proof:
-    runs-on: ubuntu-latest
+    # harvest drives git worktrees and subprocesses, which behave differently on
+    # Windows, so the suite runs on both
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
 

@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://eval-forge.dev/schemas/env_case.schema.json",
+  "title": "environment case",
+  "description": "A graded environment harvested from a fix commit. Start at base_sha; grade with test_cmd, which runs the fail_to_pass tests. Those tests fail at base_sha and pass at fix_sha. `eval-forge harvest` writes a list of these; the schema accepts one case or that list.",
+  "if": { "type": "array" },
+  "then": { "type": "array", "items": { "$ref": "#/$defs/env_case" } },
+  "else": { "$ref": "#/$defs/env_case" },
+  "$defs": {
+    "env_case": {
+      "type": "object",
+      "required": ["id", "base_sha", "fix_sha", "fail_to_pass", "test_cmd"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^fix-[0-9a-f]{12}$",
+          "description": "fix- plus the first 12 hex digits of fix_sha."
+        },
+        "base_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$",
+          "description": "The parent of the fix commit: where the environment starts."
+        },
+        "fix_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$",
+          "description": "The fix commit: a reference solution that passes the grader."
+        },
+        "fail_to_pass": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Repo-relative test files that fail at base_sha and pass at fix_sha."
+        },
+        "test_cmd": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The grading command with fail_to_pass filled in. Run from the repo root; exit 0 is a pass."
+        }
+      }
+    }
+  }
+}

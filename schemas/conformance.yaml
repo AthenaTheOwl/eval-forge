@@ -10,3 +10,6 @@ mappings:
   - schema: run_report.schema.json
     files: ["reports/*.json"]
     records: self
+  - schema: env_case.schema.json
+    files: ["examples/harvested_envs.yaml"]
+    records: each

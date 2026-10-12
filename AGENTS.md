@@ -36,16 +36,25 @@ These roles exist in spec ledger; not all are implemented in v0.
 - Customer-facing messages are flat. "Faithfulness dropped from
   0.92 to 0.81 on case `tier2-redacted`. PR blocked." Not florid.
 
-## Gates (will land in spec 0002)
+## Gates
+
+These are the gates that exist and that CI runs:
 
 ```bash
-python -m pytest
-python scripts/voice_lint.py
-python scripts/validate_schemas.py
-python -m eval_forge run evals/ --fail-on-regression
+python -m uv run --with pytest pytest -q
+python -m uv run python scripts/validate_data_conformance.py
 ```
 
-The last gate is dogfood: eval-forge gates eval-forge.
+The following gates are planned but unbuilt. They MUST NOT be listed as
+runnable commands until they exist in this repo.
+
+- `scripts/voice_lint.py` — named in spec 0001, not yet written.
+- `scripts/validate_schemas.py` — named in spec 0001, not yet written.
+  `validate_data_conformance.py` already validates every committed data
+  file against its schema, including `examples/harvested_envs.yaml`.
+- The dogfood gate, `python -m eval_forge run evals/ --fail-on-regression`,
+  needs an `evals/` suite for eval-forge itself, which does not exist yet.
+  When it lands, eval-forge gates eval-forge.
 
 ## Out of scope
 

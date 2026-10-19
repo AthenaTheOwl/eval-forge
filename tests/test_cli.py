@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -71,3 +72,20 @@ def test_init_config_missing_template_key_reports_and_exits_non_zero(tmp_path, c
     )
     assert code == 2
     assert "cited_claim" in capsys.readouterr().err
+
+
+# ---- show: a report the gate rejects exits non-zero with a message -----------
+
+
+def test_show_duplicate_case_ids_reports_and_exits_non_zero(tmp_path, capsys):
+    result = {"case_id": "same", "type": "recall_at_k", "score": 1.0,
+              "threshold": 1.0, "verdict": "pass"}
+    dup = tmp_path / "dup.json"
+    dup.write_text(
+        json.dumps({"run_id": "r", "pack_id": "p", "results": [result, result],
+                    "summary": {"score": 1.0, "passed": 2, "total": 2}}),
+        encoding="utf-8",
+    )
+    code = main(["show", str(dup)])
+    assert code == 2
+    assert "case_id values must be non-empty and unique" in capsys.readouterr().err

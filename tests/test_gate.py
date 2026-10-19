@@ -75,8 +75,10 @@ def test_empty_or_ambiguous_case_coverage_is_bad_input(results):
         gate_report({"results": results, "summary": {"score": 1.0}})
 
 
-@pytest.mark.parametrize("results", [[], [{"case_id": "same"}, {"case_id": "same"}]])
+@pytest.mark.parametrize(
+    "results", [[], [{"case_id": "same"}, {"case_id": "same"}], [{"id": "x"}]]
+)
 def test_bad_baseline_is_named_in_the_error(results):
     report = run(PACK, TARGET)
-    with pytest.raises(GateError, match="^baseline "):
+    with pytest.raises(GateError, match=r"\bbaseline\b"):
         gate_report(report, baseline={"results": results, "summary": {"score": 1.0}})

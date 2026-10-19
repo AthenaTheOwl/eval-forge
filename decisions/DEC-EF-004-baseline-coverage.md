@@ -12,8 +12,6 @@ New cases are allowed. Empty reports and duplicate identifiers are invalid input
 neither gives an unambiguous set of observations to compare. Existing report
 schemas stay unchanged; `missing_cases` belongs to the derived gate verdict.
 
-This is a bounded implementation of the change-applicability discipline in
-[AI Product Team's process-change workflow](https://github.com/3orionkings/ai-product-team/blob/main/workflows/process-change.md).
-It checks recorded coverage; it does not prove that a case's text, dataset, model,
+The gate checks recorded coverage; it does not prove that a case's text, dataset, model,
 or environment stayed equivalent. Pin those artifacts separately when making a
 release decision.

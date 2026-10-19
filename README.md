@@ -12,6 +12,11 @@ that report and exits non-zero the moment any case falls below its threshold, or
 below a recorded baseline. The pack shape is the contract; the runner and the gate
 both read it, and neither gets a vote on what counts as passing.
 
+Baseline comparison also blocks cases that disappear from the current report,
+even if every remaining case passes and the score tolerance is large. The gate
+names each missing case. Retiring coverage requires reviewing a replacement
+baseline; an empty report or duplicate case identifier is invalid input.
+
 The five checks:
 
 1. **recall@k** — does retrieval return the gold doc in the top k?

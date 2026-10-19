@@ -101,3 +101,38 @@ def test_show_unreadable_report_reports_and_exits_non_zero(tmp_path, capsys, con
         path.write_text(content, encoding="utf-8")
     assert main(["show", str(path)]) == 2
     assert message in capsys.readouterr().err
+
+
+# ---- gate: content binding (DEC-EF-005) ---------------------------------------
+
+
+def test_gate_blocks_a_case_edited_under_the_same_id(tmp_path, capsys):
+    pack = (REPO / "examples" / "rag_correctness_pack.yaml").read_text(encoding="utf-8")
+    edited = tmp_path / "pack.yaml"
+    edited.write_text(
+        pack.replace("gold_doc: doc-supplier-acme-2026", "gold_doc: doc-supplier-globex-2025")
+        .replace("claim: acme is a tier-2 supplier", "claim: acme spend was 4.2m"),
+        encoding="utf-8",
+    )
+    current = tmp_path / "current.json"
+    assert main(["run", str(edited), "--target", str(REPO / "examples" / "fixture_target_regressed"), "--out", str(current)]) == 0
+    capsys.readouterr()
+    code = main(["gate", str(current), "--baseline", str(REPO / "reports" / "run.json")])
+    out = capsys.readouterr().out
+    assert code == 1
+    assert "5/5 cases passed" in out and "PR blocked" in out
+    assert "`recall_at_5_supplier_lookup` changed since the baseline" in out
+    assert "`citation_faithfulness_tier` changed since the baseline" in out
+
+
+def test_gate_warns_on_a_baseline_without_hashes(tmp_path, capsys):
+    committed = json.loads((REPO / "reports" / "run.json").read_text(encoding="utf-8"))
+    for result in committed["results"]:
+        result.pop("case_hash")
+    old = tmp_path / "old_baseline.json"
+    old.write_text(json.dumps(committed), encoding="utf-8")
+    code = main(["gate", str(REPO / "reports" / "run.json"), "--baseline", str(old)])
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "warning: baseline has no case_hash for 5 case(s)" in captured.err
+    assert "DEC-EF-005" in captured.err

@@ -18,6 +18,16 @@ names each missing case. Retiring coverage requires reviewing a replacement
 baseline; an empty report or duplicate case identifier is invalid input. The
 design record is `decisions/DEC-EF-004-baseline-coverage.md`.
 
+Each result also records `case_hash`, the SHA-256 of the case definition it was
+graded against. A case whose hash differs from the baseline's for the same case
+identifier blocks the gate, so rewriting a failing case's expectation or
+lowering its threshold under the same identifier does not pass. To accept the
+edit, review it and record a new baseline. A baseline written before
+`case_hash` existed still gates on coverage and score; the gate prints a
+warning for its unhashed cases instead of blocking. Re-record such a baseline to
+bind case content. The design record is
+`decisions/DEC-EF-005-baseline-case-content.md`.
+
 The five checks:
 
 1. **recall@k** — does retrieval return the gold doc in the top k?

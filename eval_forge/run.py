@@ -137,6 +137,19 @@ GRADERS = {
 }
 
 
+def case_hash(case: dict[str, Any]) -> str:
+    """Content hash of one pack case: everything the grader reads (DEC-EF-005).
+
+    The case is serialized as canonical JSON (sorted keys, no whitespace) so
+    the hash depends on the case's content, not on YAML key order or layout.
+    The gate compares it with the baseline's hash for the same case_id.
+    """
+    canonical = json.dumps(
+        case, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str
+    )
+    return "sha256:" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 def _run_id(pack_id: str, target_name: str) -> str:
     digest = hashlib.sha1(f"{pack_id}:{target_name}".encode()).hexdigest()[:6]
     return f"ef-{pack_id}-{digest}"
@@ -166,6 +179,7 @@ def run_pack(
                 "threshold": case["threshold"],
                 "verdict": verdict,
                 "detail": detail,
+                "case_hash": case_hash(case),
             }
         )
 

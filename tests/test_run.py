@@ -85,3 +85,28 @@ def test_grade_tool_call_correctness_scores_zero_on_no_calls():
     score, detail = grade_tool_call_correctness(case, {"tool_calls": []})
     assert score == 0.0
     assert detail == "no tool call observed"
+
+
+# ---- case content hash (DEC-EF-005) -----------------------------------------
+
+
+def test_each_result_carries_the_hash_of_its_case():
+    from eval_forge.pack import load_pack
+    from eval_forge.run import case_hash
+
+    pack = load_pack(PACK)
+    report = run(PACK, TARGET)
+    assert [r["case_hash"] for r in report["results"]] == [case_hash(c) for c in pack["cases"]]
+    assert len({r["case_hash"] for r in report["results"]}) == len(report["results"])
+
+
+def test_case_hash_ignores_key_order_but_not_content():
+    from eval_forge.run import case_hash
+
+    case = {"id": "c", "type": "recall_at_k", "input": "i", "expect": {"k": 5, "gold_doc": "a"}, "threshold": 0.9}
+    reordered = {"threshold": 0.9, "expect": {"gold_doc": "a", "k": 5}, "input": "i", "type": "recall_at_k", "id": "c"}
+    assert case_hash(case) == case_hash(reordered)
+    assert case_hash(case).startswith("sha256:") and len(case_hash(case)) == len("sha256:") + 64
+    assert case_hash(case) != case_hash({**case, "expect": {"k": 5, "gold_doc": "b"}})
+    assert case_hash(case) != case_hash({**case, "threshold": 0.5})
+    assert case_hash(case) != case_hash({**case, "input": "j"})

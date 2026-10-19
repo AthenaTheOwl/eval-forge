@@ -4,17 +4,26 @@
 
 Accepted (2026-10-18).
 
-## Decision
+## Context
 
 A perfect average over a smaller set cannot establish that the old regression
-suite still passes. The gate now compares the baseline case identifiers with the
-current report before accepting score deltas. Every missing baseline identifier
-appears in `missing_cases` and blocks the verdict, independent of score tolerance.
-An intentionally retired case requires explicit review of a replacement baseline.
+suite still passes.
 
-New cases are allowed. Empty reports and duplicate identifiers are invalid input:
-neither gives an unambiguous set of observations to compare. Existing report
-schemas stay unchanged; `missing_cases` belongs to the derived gate verdict.
+## Decision
+
+The gate now compares the baseline case identifiers with the current report
+before accepting score deltas. Every missing baseline identifier appears in
+`missing_cases` and blocks the verdict, independent of score tolerance. An
+intentionally retired case requires explicit review of a replacement baseline.
+
+New cases are allowed. Empty reports and duplicate identifiers are invalid
+input. Existing report schemas stay unchanged; `missing_cases` belongs to the
+derived gate verdict.
+
+## Why
+
+Empty reports and duplicate identifiers are rejected because neither gives an
+unambiguous set of observations to compare.
 
 ## Consequences
 

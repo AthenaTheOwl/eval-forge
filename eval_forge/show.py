@@ -5,12 +5,11 @@ Prints the cases table, each pass/fail, the score, and the gate verdict.
 """
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 from typing import Any
 
-from .gate import GateError, gate_report
+from .gate import GateError, gate_report, load_report
 from .pack import REPO_ROOT
 
 REPORTS_DIR = REPO_ROOT / "reports"
@@ -60,9 +59,8 @@ def show(path: str | Path | None = None) -> int:
         if path is None:
             print("no run report found under reports/. run `eval-forge run` first.")
             return 1
-    report = json.loads(Path(path).read_text(encoding="utf-8"))
     try:
-        text = render(report)
+        text = render(load_report(path))
     except GateError as err:
         print(f"error: {err}", file=sys.stderr)
         return 2

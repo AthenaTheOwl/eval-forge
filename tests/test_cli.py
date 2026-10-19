@@ -89,3 +89,15 @@ def test_show_duplicate_case_ids_reports_and_exits_non_zero(tmp_path, capsys):
     code = main(["show", str(dup)])
     assert code == 2
     assert "case_id values must be non-empty and unique" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    "content, message",
+    [(None, "report not found"), ("{", "not valid JSON"), ("[]", "is not a JSON object")],
+)
+def test_show_unreadable_report_reports_and_exits_non_zero(tmp_path, capsys, content, message):
+    path = tmp_path / "report.json"
+    if content is not None:
+        path.write_text(content, encoding="utf-8")
+    assert main(["show", str(path)]) == 2
+    assert message in capsys.readouterr().err

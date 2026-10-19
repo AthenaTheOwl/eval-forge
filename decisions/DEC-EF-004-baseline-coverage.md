@@ -1,6 +1,10 @@
-# DEC-EF-004: Missing baseline cases block the gate
+# DEC-EF-004 — missing baseline cases block the gate
 
-Date: 2026-10-18
+## Status
+
+Accepted (2026-10-18).
+
+## Decision
 
 A perfect average over a smaller set cannot establish that the old regression
 suite still passes. The gate now compares the baseline case identifiers with the
@@ -12,6 +16,8 @@ New cases are allowed. Empty reports and duplicate identifiers are invalid input
 neither gives an unambiguous set of observations to compare. Existing report
 schemas stay unchanged; `missing_cases` belongs to the derived gate verdict.
 
-The gate checks recorded coverage; it does not prove that a case's text, dataset, model,
-or environment stayed equivalent. Pin those artifacts separately when making a
-release decision.
+## Consequences
+
+The gate checks recorded coverage; it does not prove that a case's text,
+dataset, model, or environment stayed equivalent. Pin those artifacts separately
+when making a release decision.

@@ -3,7 +3,8 @@
 Two gate modes, both deterministic:
   - threshold gate: any case below its own threshold fails the gate.
   - regression gate: if a baseline report is supplied, any case whose score
-    dropped below baseline by more than `tolerance` fails the gate.
+    dropped below baseline by more than `tolerance` fails the gate, and so
+    does any baseline case missing from the report (DEC-EF-004).
 
 The gate exit code is what blocks the PR. The markdown is the customer surface
 the GitHub App would post verbatim; it stays flat — the delta speaks for itself.
@@ -40,7 +41,7 @@ def gate_report(
     baseline: dict[str, Any] | None = None,
     tolerance: float = 0.0,
 ) -> dict[str, Any]:
-    """Return a gate verdict dict: {passed: bool, failures: [...], regressions: [...]}."""
+    """Return a gate verdict dict: {passed, failures, regressions, missing_cases, score}."""
     failures: list[dict[str, Any]] = []
     regressions: list[dict[str, Any]] = []
 

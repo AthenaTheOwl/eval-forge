@@ -1,4 +1,4 @@
-# DEC-004: Missing baseline cases block the gate
+# DEC-EF-004: Missing baseline cases block the gate
 
 Date: 2026-10-18
 

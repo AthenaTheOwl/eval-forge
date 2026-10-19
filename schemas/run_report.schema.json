@@ -61,6 +61,11 @@
         "detail": {
           "type": "string",
           "description": "Flat one-line explanation. Customer-facing; passes voice_lint."
+        },
+        "case_hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "sha256 of the case definition the result was graded against (canonical JSON). The gate compares it with the baseline's hash for the same case_id (DEC-EF-005). Optional so reports written before it existed stay valid."
         }
       }
     }

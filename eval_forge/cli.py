@@ -71,6 +71,13 @@ def _cmd_gate(args: argparse.Namespace) -> int:
     except GateError as err:
         print(f"error: {err}", file=sys.stderr)
         return 2
+    if verdict["unhashed_cases"]:
+        print(
+            f"warning: baseline has no case_hash for {len(verdict['unhashed_cases'])} case(s) "
+            f"({', '.join(verdict['unhashed_cases'])}); a changed case under the same id "
+            "passes unnoticed. Record a new baseline to bind case content (DEC-EF-005).",
+            file=sys.stderr,
+        )
     md = comment_markdown(report, verdict)
     if args.comment:
         out = Path(args.comment)

@@ -1,6 +1,8 @@
 from pathlib import Path
 
-from eval_forge.gate import comment_markdown, gate_report
+import pytest
+
+from eval_forge.gate import GateError, comment_markdown, gate_report
 from eval_forge.run import run
 
 REPO = Path(__file__).resolve().parent.parent
@@ -46,3 +48,28 @@ def test_comment_markdown_is_flat_and_complete():
     assert "eval-forge" in md
     assert "below threshold:" in md
     assert "recall_at_5_supplier_lookup" in md
+
+
+def test_dropped_baseline_case_blocks_even_when_remaining_cases_pass():
+    baseline = run(PACK, TARGET)
+    current = {**baseline, "results": baseline["results"][1:]}
+    missing = baseline["results"][0]["case_id"]
+    verdict = gate_report(current, baseline=baseline, tolerance=1.0)
+    assert verdict["passed"] is False
+    assert verdict["missing_cases"] == [missing]
+    assert verdict["regressions"] == []
+    md = comment_markdown(current, verdict)
+    assert "PR blocked" in md and missing in md
+    assert "was not evaluated" in md
+
+
+def test_added_case_does_not_count_as_lost_coverage():
+    report = run(PACK, TARGET)
+    baseline = {**report, "results": report["results"][1:]}
+    assert gate_report(report, baseline=baseline)["passed"] is True
+
+
+@pytest.mark.parametrize("results", [[], [{"case_id": "same"}, {"case_id": "same"}]])
+def test_empty_or_ambiguous_case_coverage_is_bad_input(results):
+    with pytest.raises(GateError):
+        gate_report({"results": results, "summary": {"score": 1.0}})

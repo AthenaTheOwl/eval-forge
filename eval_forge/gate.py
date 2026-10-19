@@ -20,7 +20,18 @@ class GateError(ValueError):
 
 
 def _index_by_case(report: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    return {r["case_id"]: r for r in report.get("results", [])}
+    results = report.get("results")
+    if not isinstance(results, list) or not results:
+        raise GateError("report has no results; is this an eval-forge run report?")
+    indexed = {}
+    for result in results:
+        if not isinstance(result, dict) or not isinstance(result.get("case_id"), str):
+            raise GateError("every result needs a string case_id")
+        case_id = result["case_id"]
+        if not case_id or case_id in indexed:
+            raise GateError("case_id values must be non-empty and unique")
+        indexed[case_id] = result
+    return indexed
 
 
 def gate_report(
@@ -33,11 +44,10 @@ def gate_report(
     failures: list[dict[str, Any]] = []
     regressions: list[dict[str, Any]] = []
 
-    results = report.get("results")
-    if not isinstance(results, list):
-        raise GateError("report has no results; is this an eval-forge run report?")
-
-    base_index = _index_by_case(baseline) if baseline else {}
+    current_index = _index_by_case(report)
+    results = list(current_index.values())
+    base_index = _index_by_case(baseline) if baseline is not None else {}
+    missing_cases = sorted(set(base_index) - set(current_index))
 
     for r in results:
         if r["verdict"] == "fail":
@@ -56,7 +66,7 @@ def gate_report(
                         }
                     )
 
-    passed = not failures and not regressions
+    passed = not failures and not regressions and not missing_cases
     summary = report.get("summary")
     if not isinstance(summary, dict) or "score" not in summary:
         raise GateError("report has no summary.score; is this an eval-forge run report?")
@@ -64,6 +74,7 @@ def gate_report(
         "passed": passed,
         "failures": failures,
         "regressions": regressions,
+        "missing_cases": missing_cases,
         "score": summary["score"],
     }
 
@@ -104,6 +115,11 @@ def comment_markdown(report: dict[str, Any], verdict: dict[str, Any]) -> str:
                 f"- `{f['case_id']}` scored {f['score']:.2f}, "
                 f"threshold {f['threshold']:.2f}. {f.get('detail', '')}".rstrip()
             )
+
+    if verdict.get("missing_cases"):
+        lines.extend(["", "baseline cases missing from current report:"])
+        for case_id in verdict["missing_cases"]:
+            lines.append(f"- `{case_id}` was not evaluated. Restore it or explicitly review a new baseline.")
 
     if verdict["passed"]:
         lines.append("")

@@ -15,7 +15,8 @@ both read it, and neither gets a vote on what counts as passing.
 Baseline comparison also blocks cases that disappear from the current report,
 even if every remaining case passes and the score tolerance is large. The gate
 names each missing case. Retiring coverage requires reviewing a replacement
-baseline; an empty report or duplicate case identifier is invalid input.
+baseline; an empty report or duplicate case identifier is invalid input. The
+design record is `decisions/DEC-EF-004-baseline-coverage.md`.
 
 The five checks:
 

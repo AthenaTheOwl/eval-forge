@@ -82,3 +82,14 @@ def test_bad_baseline_is_named_in_the_error(results):
     report = run(PACK, TARGET)
     with pytest.raises(GateError, match=r"\bbaseline\b"):
         gate_report(report, baseline={"results": results, "summary": {"score": 1.0}})
+
+
+@pytest.mark.parametrize("field", ["verdict", "score"])
+def test_result_missing_a_gated_field_is_bad_input(field):
+    report = run(PACK, TARGET)
+    broken = {**report, "results": [dict(r) for r in report["results"]]}
+    del broken["results"][0][field]
+    with pytest.raises(GateError, match="^report .*numeric score"):
+        gate_report(broken)
+    with pytest.raises(GateError, match="^baseline .*numeric score"):
+        gate_report(report, baseline=broken)

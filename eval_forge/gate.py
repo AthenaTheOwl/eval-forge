@@ -32,6 +32,16 @@ def _index_by_case(report: dict[str, Any], label: str) -> dict[str, dict[str, An
         if not case_id or case_id in indexed:
             raise GateError(f"{label} case_id values must be non-empty and unique")
         indexed[case_id] = result
+    for case_id, result in indexed.items():
+        score = result.get("score")
+        if (
+            isinstance(score, bool)
+            or not isinstance(score, (int, float))
+            or result.get("verdict") not in ("pass", "fail")
+        ):
+            raise GateError(
+                f"{label} result {case_id!r} needs a numeric score and a verdict of pass or fail"
+            )
     return indexed
 
 

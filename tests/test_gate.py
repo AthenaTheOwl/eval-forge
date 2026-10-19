@@ -73,3 +73,10 @@ def test_added_case_does_not_count_as_lost_coverage():
 def test_empty_or_ambiguous_case_coverage_is_bad_input(results):
     with pytest.raises(GateError):
         gate_report({"results": results, "summary": {"score": 1.0}})
+
+
+@pytest.mark.parametrize("results", [[], [{"case_id": "same"}, {"case_id": "same"}]])
+def test_bad_baseline_is_named_in_the_error(results):
+    report = run(PACK, TARGET)
+    with pytest.raises(GateError, match="^baseline "):
+        gate_report(report, baseline={"results": results, "summary": {"score": 1.0}})

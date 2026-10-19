@@ -20,17 +20,17 @@ class GateError(ValueError):
     """The run report could not be loaded, parsed, or gated."""
 
 
-def _index_by_case(report: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def _index_by_case(report: dict[str, Any], label: str) -> dict[str, dict[str, Any]]:
     results = report.get("results")
     if not isinstance(results, list) or not results:
-        raise GateError("report has no results; is this an eval-forge run report?")
+        raise GateError(f"{label} has no results; is this an eval-forge run report?")
     indexed = {}
     for result in results:
         if not isinstance(result, dict) or not isinstance(result.get("case_id"), str):
-            raise GateError("every result needs a string case_id")
+            raise GateError(f"every {label} result needs a string case_id")
         case_id = result["case_id"]
         if not case_id or case_id in indexed:
-            raise GateError("case_id values must be non-empty and unique")
+            raise GateError(f"{label} case_id values must be non-empty and unique")
         indexed[case_id] = result
     return indexed
 
@@ -45,9 +45,9 @@ def gate_report(
     failures: list[dict[str, Any]] = []
     regressions: list[dict[str, Any]] = []
 
-    current_index = _index_by_case(report)
+    current_index = _index_by_case(report, "report")
     results = list(current_index.values())
-    base_index = _index_by_case(baseline) if baseline is not None else {}
+    base_index = _index_by_case(baseline, "baseline") if baseline is not None else {}
     missing_cases = sorted(set(base_index) - set(current_index))
 
     for r in results:
